@@ -11,6 +11,7 @@ import SwiftData
 struct ContentView: View {
     //    @State keeps one tracker alive for the life of this view.
     @State private var tracker = EyeTracker()
+    @State private var showDetail = false
     var body: some View {
         VStack(spacing: 32) {
 
@@ -47,6 +48,22 @@ struct ContentView: View {
         // Start the camera when the view appears, stop it when it goes way.
         .onAppear {tracker.start()}
         .onDisappear{tracker.stop()}
+
+        // Watch the direction. Every time it changes, this runs.
+        .onChange(of: tracker.direction) { _, newDirection in
+            // Only open the shee when you look up and it isn't already open.
+            if newDirection == .up && !showDetail {
+                showDetail = true
+            }
+        }
+
+            // Shows DetailView whenever showDetails in true.
+            // Swiping the sheet down sets showDetail back to false.
+
+                .sheet(isPresented: $showDetail) {
+                    DetailView()
+                }
+
     }
 
     // One labeled progress bar for 0...1 value/
