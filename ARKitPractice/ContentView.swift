@@ -9,53 +9,61 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    //    @State keeps one tracker alive for the life of this view.
+    @State private var tracker = EyeTracker()
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        VStack(spacing: 32) {
+
+            // On devices without FaceID, explain why nothing happens.
+            if !EyeTracker.isSupported {
+                ContentUnavailableView("Face Tracking Unavailable", systemImage: "faceid", description: Text("This device has no TrueDepth camera.")
+                )
+            } else {
+                // Big arrow showing the current direction.
+                Image(systemName: tracker.direction.symbol)
+                    .font(.largeTitle)
+                //Animates smoothly when the sysmol changes
+                    .contentTransition(.symbolEffect(.replace))
+
+                // The message you asked for.
+                Text(tracker.direction.rawValue)
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                // Debug bars: vary useful fortuning the treshold.
+                VStack(alignment: .leading, spacing: 16) {
+                    debugRow("Up", tracker.lookUp)
+                    debugRow("Down", tracker.lookDown)
+                    debugRow("Left", tracker.lookLeft)
+                    debugRow("Right", tracker.lookRight)
+
                 }
-                .onDelete(perform: deleteItems)
+                .padding()
+
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
+        .padding()
+        .animation(.easeInOut(duration: 0.2), value: tracker.direction)
+        // Start the camera when the view appears, stop it when it goes way.
+        .onAppear {tracker.start()}
+        .onDisappear{tracker.stop()}
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+    // One labeled progress bar for 0...1 value/
+    private func debugRow(_ label: String, _ value: Float) -> some View {
+        HStack {
+            Text(label)
+                .frame(width: 60, alignment: .leading)
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            ProgressView(value: Double(value))
+
+            Text(value, format: .number.precision(.fractionLength(2)))
+                .monospacedDigit()
+                .frame(width: 44)
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
