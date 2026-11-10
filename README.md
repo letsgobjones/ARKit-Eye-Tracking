@@ -2,6 +2,10 @@
 
 A small SwiftUI practice app that uses **ARKit face tracking** to follow your eyes and show which direction you're looking: up, down, left, right or center.
 
+<p align="center">
+  <img src="docs/demo.gif" width="280" alt="Demo: the arrow and message follow where the user looks, and looking up opens a sheet">
+</p>
+
 ## Features
 
 - Real-time eye tracking with the front TrueDepth camera
